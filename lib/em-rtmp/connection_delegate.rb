@@ -49,6 +49,7 @@ module EventMachine
       #
       # Returns nothing
       def change_state(state)
+        return if @state == state
         Logger.print "state changed from #{@state} to #{state}", caller: caller, indent: 1
         @state = state
       end

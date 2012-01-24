@@ -36,7 +36,8 @@ module EventMachine
         raise "No more data to read from stream" if header.body_length < body.length
         raise "Negative read should not happen" if (header.body_length - body.length) < 0
 
-        read_size = [header.body_length - body.length, 128].min
+        chunk_size = @connection.chunk_size
+        read_size = [header.body_length - body.length, chunk_size].min
 
         Logger.print "want #{read_size} (#{body.length}/#{header.body_length})"
 
@@ -49,7 +50,7 @@ module EventMachine
       # Returns true or false
       def complete?
         complete = body.length >= header.body_length
-        Logger.print "response complete? #{complete} (#{body.length}/#{header.body_length}"
+        Logger.print "response complete? #{complete} (#{body.length}/#{header.body_length})"
         complete
       end
 

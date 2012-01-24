@@ -171,6 +171,22 @@ module EventMachine
           byte | ((value & mask) << shift)
         }
       end
+
+      private
+
+      # Obtain the shift and bitmasks for a set of widths
+      #
+      # Returns an array of arrays, each top-level array containing
+      # two values:
+      #   [0] - shift
+      #   [1] - mask
+      def shifts_and_masks(bit_widths)
+        (0 ... bit_widths.length).map{ |i| [
+          bit_widths[i+1 .. -1].inject(0){ |a,e| a + e },
+          0b1111_1111 >> (8 - bit_widths[i])
+        ]}
+      end
+
     end
   end
 end

@@ -42,7 +42,7 @@ module EventMachine
           bandwidth_type = response.body[4].unpack('c')[0]
           Logger.print "setting bandwidth to #{bandwidth} (#{bandwidth_type})"
         else
-          Logger.print "cannot route unknown response: #{response}"
+          Logger.print "cannot route unknown response: #{response.inspect}"
         end
       end
 

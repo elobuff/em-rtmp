@@ -18,6 +18,14 @@ module EventMachine
       attr_accessor :header_length, :body_length, :channel_id,
                     :message_type_id, :message_stream_id, :timestamp
 
+      HEADER_DEFAULTS = {
+        header_length: 12,
+        timestamp: 0,
+        channel_id: 3,
+        message_type_id: 0,
+        message_stream_id: 0
+      }
+
       # RTMP has a variable length header
       # The keys below are binary values which correspond to expected byte lengths
       # (0b00 in header length field would result in an expected 12 byte header)
@@ -57,11 +65,6 @@ module EventMachine
       def initialize(attrs={})
         super attrs.delete(:connection)
         attrs.each {|k,v| send("#{k}=", v)}
-        self.header_length ||= 12
-        self.timestamp ||= 0
-        self.channel_id ||= 3
-        self.message_type_id ||= 0
-        self.message_stream_id ||= 0
       end
 
       # Inherit values from another header
@@ -73,7 +76,10 @@ module EventMachine
         keys = %w[header_length body_length channel_id message_type_id message_stream_id timestamp]
         other_values = Hash[keys.map {|k| [k, header.instance_variable_get("@#{k}")]}]
         other_values.each do |k, v|
-          send("#{k}=", v) unless v.nil?
+          unless v.nil?
+            Logger.print "setting #{k} to #{v}"
+            send("#{k}=", v) unless v.nil?
+          end
         end
         self
       end
@@ -100,6 +106,12 @@ module EventMachine
       #
       # Returns the buffer
       def encode
+
+        # Set defaults if necessary
+        HEADER_DEFAULTS.each do |k, v|
+          send("#{k}=", v) if instance_variable_get("@#{k}").nil?
+        end
+
         h_type = HEADER_LENGTHS.invert[header_length]
 
         buffer = Buffer.new
@@ -118,7 +130,7 @@ module EventMachine
           buffer.write_uint32_le message_stream_id
         end
 
-        buffer
+        buffer.string
       end
 
       # Read the header from the connection

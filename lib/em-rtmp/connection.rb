@@ -16,8 +16,13 @@ module EventMachine
         @chunk_size = 128
         @response_router = ResponseRouter.new(self)
         @handshake = Handshake.new(self)
+        @callbacks = { :ready => [] }
 
         change_state :connecting
+      end
+
+      def on_ready(&blk)
+        @callbacks[:ready] << blk
       end
 
       # Reads from the buffer, to facilitate IO operations
@@ -33,6 +38,7 @@ module EventMachine
       # Returns nothing
       def write(data)
         Logger.print "sending #{data.length} bytes"
+        Logger.debug "Sending [#{data.length}]: #{data}"
         send_data data
       end
 
@@ -46,6 +52,13 @@ module EventMachine
       def change_state(state)
         Logger.print "state changed from #{@state} to #{state}", caller: caller, indent: 1
         @state = state
+
+        if state == :ready
+          @callbacks[:ready].each do |blk|
+            blk.call
+          end
+        end
+
       end
 
       # Start the handshake process when our connection is completed.
@@ -67,6 +80,7 @@ module EventMachine
       # Returns nothing
       def receive_data(data)
         Logger.print "received #{data.length} bytes"
+        Logger.debug "Received [#{data.length}]: #{data}"
         @buffer.append data
         buffer_changed
       end
@@ -78,11 +92,11 @@ module EventMachine
       def buffer_changed
 
         until bytes_waiting < 1 do
+          Logger.print "1 buffer is #{@buffer.pos}/#{@buffer.length}"
           case state
           when :connecting
             raise RTMPError, "Should not receive data while connecting"
             break
-
           when :handshake
             if @handshake.buffer_changed == :handshake_complete
               Logger.print "handshake complete"
@@ -90,16 +104,19 @@ module EventMachine
               change_state :ready
             end
             break
-
           when :ready
             if header = Header.new(connection: self).populate_from_stream
               Logger.print "routing new header for channel #{header.channel_id}, type: #{header.message_type}, length: #{header.body_length}"
               @response_router.receive_header header
+            else
+              Logger.print "could not do it!"
             end
-            break
-
+            next
           end
+          Logger.print "2 buffer is #{@buffer.pos}/#{@buffer.length}"
         end
+
+        Logger.print "no more bytes waiting"
 
       end
     end

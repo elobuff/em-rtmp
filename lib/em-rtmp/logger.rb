@@ -32,7 +32,7 @@ module EventMachine
 
         puts "" if @@previous_indent != options[:indent]
         indent = ">" * (options[:indent] * 2)
-        puts "%s%-#{30-indent.length}s%-30s%s" % [indent, "#{ruby_file}:#{ruby_line}", ruby_method, message]
+        puts "%s%-#{30-indent.length}s%-30s%s" % [indent, "#{ruby_file}:#{ruby_line}", ruby_method, message.encode('UTF-8')]
 
         @@previous_indent = options[:indent]
       end

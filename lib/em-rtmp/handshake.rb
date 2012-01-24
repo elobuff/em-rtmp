@@ -23,16 +23,6 @@ module EventMachine
       HANDSHAKE_VERSION = 0x03
       HANDSHAKE_LENGTH = 1536
 
-      attr_accessor :client_challenge
-
-      # Perform initialization and offer the first leg of the handshake.
-      #
-      # Returns nothing
-      def initialize(connection)
-        Logger.print "initialize", indent: 1
-        super connection
-      end
-
       # Handles a change to the buffer state
       #
       # Returns a symbol indicating our state
@@ -60,12 +50,12 @@ module EventMachine
       def issue_challenge
         Logger.print "issuing client challenge", indent: 1
 
-        self.client_challenge = "\x00\x00\x00\x00\x00\x00\x00\x00" + (8...HANDSHAKE_LENGTH).map{rand(255)}.pack('C*')
+        @client_challenge = "\x00\x00\x00\x00\x00\x00\x00\x00" + (8...HANDSHAKE_LENGTH).map{rand(255)}.pack('C*')
 
         write_uint8 HANDSHAKE_VERSION
-        write client_challenge
+        write @client_challenge
 
-        self.state = :challenge_issued
+        change_state :challenge_issued
       end
 
       # Receives the server version byte and reissues it to the stream
@@ -81,7 +71,7 @@ module EventMachine
 
         server_challenge = read(HANDSHAKE_LENGTH)
         write server_challenge
-        self.state = :challenge_received
+        change_state :challenge_received
       end
 
       # Reads the server response to our challenge to authenticate peer
@@ -91,12 +81,12 @@ module EventMachine
         Logger.print "handling client response", indent: 1
 
         server_response = read(HANDSHAKE_LENGTH)
-        unless server_response == client_challenge
+        unless server_response == @client_challenge
           raise HandshakeError, "Expected server to return client challenge"
         end
 
         Logger.print "handshake complete", indent: 1
-        self.state = :handshake_complete
+        change_state :handshake_complete
       end
 
     end

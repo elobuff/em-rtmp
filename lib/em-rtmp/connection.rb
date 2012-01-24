@@ -5,16 +5,19 @@ module EventMachine
     class Connection < EventMachine::Connection
       include IOHelpers
 
-      attr_accessor :state, :buffer
+      attr_accessor :state, :chunk_size
 
       # Initialize the connection and setup our handshake
       #
       # Returns nothing
       def initialize
         super
-        self.buffer = Buffer.new
-        self.state = :handshake
+        @buffer = Buffer.new
+        @chunk_size = 128
+        @response_router = ResponseRouter.new(self)
         @handshake = Handshake.new(self)
+
+        change_state :connecting
       end
 
       # Reads from the buffer, to facilitate IO operations
@@ -22,15 +25,7 @@ module EventMachine
       # Returns the result of the read
       def read(length)
         Logger.print "reading #{length} bytes from buffer"
-        buffer.read length
-      end
-
-      # Used to track changes in state
-      #
-      # Returns nothing
-      def state=(state)
-        Logger.print "state changed to #{state}", caller: caller
-        @state = state
+        @buffer.read length
       end
 
       # Writes data to the EventMachine connection
@@ -41,10 +36,29 @@ module EventMachine
         send_data data
       end
 
+      def bytes_waiting
+        @buffer.remaining
+      end
+
+      # Used to track changes in state
+      #
+      # Returns nothing
+      def change_state(state)
+        Logger.print "state changed from #{@state} to #{state}", caller: caller, indent: 1
+        @state = state
+      end
+
       # Start the handshake process when our connection is completed.
       def connection_completed
         Logger.print "connection completed, issuing rtmp handshake"
+        change_state :handshake
         @handshake.issue_challenge
+      end
+
+      # called when the connection is terminated
+      def unbind
+        Logger.print "disconnected"
+        change_state :disconnected
       end
 
       # Receives data and offers it to the appropriate delegate object.
@@ -53,7 +67,7 @@ module EventMachine
       # Returns nothing
       def receive_data(data)
         Logger.print "received #{data.length} bytes"
-        self.buffer.append data
+        @buffer.append data
         buffer_changed
       end
 
@@ -62,18 +76,31 @@ module EventMachine
       #
       # Returns nothing
       def buffer_changed
-        case state
-        when :handshake
-          if @handshake.buffer_changed == :handshake_complete
-            Logger.print "handshake complete"
-            @handshake = nil
-            self.state = :connect
+
+        until bytes_waiting < 1 do
+          case state
+          when :connecting
+            raise RTMPError, "Should not receive data while connecting"
+            break
+
+          when :handshake
+            if @handshake.buffer_changed == :handshake_complete
+              Logger.print "handshake complete"
+              @handshake = nil
+              change_state :ready
+            end
+            break
+
+          when :ready
+            if header = Header.new(connection: self).populate_from_stream
+              Logger.print "routing new header for channel #{header.channel_id}, type: #{header.message_type}, length: #{header.body_length}"
+              @response_router.receive_header header
+            end
+            break
+
           end
-        when :connect
-          # Handle connect state responses
-        else
-          # Here we will route to other handlers
         end
+
       end
     end
 
@@ -91,6 +118,7 @@ module EventMachine
       # Connection is now secure, issue the RTMP handshake challenge
       def ssl_handshake_completed
         Logger.print "ssl handshake completed, issuing rtmp handshake"
+        change_state :handshake
         @handshake.issue_challenge
       end
     end

@@ -10,7 +10,7 @@ module EventMachine
       #
       # Returns an Integer representing the number of bytes left
       def remaining
-        size - pos
+        length - pos
       end
 
       # Truncate the buffer to nothing and set the position to zero
@@ -21,5 +21,13 @@ module EventMachine
         seek 0
       end
 
+      # Append to the end of the string without changing our position
+      #
+      # Returns nothing
+      def append(string)
+        self.string << string
+      end
+
+    end
   end
 end

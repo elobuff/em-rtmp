@@ -2,6 +2,10 @@ module EventMachine
   module RTMP
     class Message
 
+      class << self
+        attr_accessor :transaction_id
+      end
+
       attr_accessor :_amf_data, :_amf_error, :_amf_unparsed
       attr_accessor :version, :command, :transaction_id, :values
 
@@ -13,7 +17,7 @@ module EventMachine
       def initialize(attrs={})
         attrs.each {|k,v| send("#{k}=", v)}
         self.command ||= nil
-        self.transaction_id ||= rand(255)
+        self.transaction_id ||= self.class.next_transaction_id
         self.values ||= []
         self.version ||= 0x00
       end
@@ -26,6 +30,7 @@ module EventMachine
       #
       # Returns a string containing an encoded message
       def encode
+        Logger.print "encoding #{self.inspect}"
         class_mapper = RocketAMF::ClassMapper.new
         ser = RocketAMF::Serializer.new class_mapper
 
@@ -51,7 +56,7 @@ module EventMachine
 
       def decode(string)
         class_mapper = RocketAMF::ClassMapper.new
-        io = Buffer.new string
+        io = StringIO.new string
         des = RocketAMF::Deserializer.new class_mapper
 
         begin
@@ -75,6 +80,15 @@ module EventMachine
 
         self.command = values.delete_at(0)
         self.transaction_id = values.delete_at(0)
+      end
+
+      def success?
+        command != "_error"
+      end
+
+      def self.next_transaction_id
+        self.transaction_id ||= 0
+        self.transaction_id += 1
       end
 
     end

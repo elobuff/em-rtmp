@@ -24,6 +24,7 @@ module EventMachine
       def initialize(connection)
         super connection
         self.header = Header.new
+        self.message = Message.new
         self.body = ""
       end
 

@@ -3,7 +3,7 @@ module EventMachine
     class Response < ConnectionDelegate
       @@channels = []
 
-      attr_accessor :channel_id, :header, :body
+      attr_accessor :channel_id, :header, :body, :waiting_on_bytes
 
       # Initialize as a logical stream on a given stream ID
       #
@@ -14,6 +14,7 @@ module EventMachine
         self.channel_id = channel_id
         self.header = Header.new
         self.body = ""
+        self.waiting_on_bytes = 0
       end
 
       def reset
@@ -36,12 +37,30 @@ module EventMachine
         raise "No more data to read from stream" if header.body_length < body.length
         raise "Negative read should not happen" if (header.body_length - body.length) < 0
 
-        chunk_size = @connection.chunk_size
-        read_size = [header.body_length - body.length, chunk_size].min
+        if waiting_on_bytes > 0
+          read_size = waiting_on_bytes
+        else
+          chunk_size = @connection.chunk_size
+          read_size = [header.body_length - body.length, chunk_size].min
+        end
 
         Logger.print "want #{read_size} (#{body.length}/#{header.body_length})"
 
-        self.body << read(read_size)
+        data = read(read_size)
+        self.body << data
+
+        if data.length != read_size
+          self.waiting_on_bytes = read_size - data.length
+          Logger.print "read_next_chunk got insufficient data (#{data.length}/#{read_size}), waiting"
+        else
+          self.waiting_on_bytes = 0
+        end
+
+        self.body
+      end
+
+      def waiting_in_chunk?
+        waiting_on_bytes > 0
       end
 
       # Determine whether or not the stream is complete by checking the length

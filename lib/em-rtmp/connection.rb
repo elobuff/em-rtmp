@@ -16,9 +16,18 @@ module EventMachine
         @chunk_size = 128
         @response_router = ResponseRouter.new(self)
         @handshake = Handshake.new(self)
-        @callbacks = { :ready => [] }
+        @heartbeat = Heartbeat.new(self)
+        @callbacks = { :handshake_complete => [], :ready => [] }
 
         change_state :connecting
+
+        on_ready do
+          @heartbeat.start
+        end
+      end
+
+      def on_handshake_complete(&blk)
+        @callbacks[:handshake_complete] << blk
       end
 
       def on_ready(&blk)
@@ -53,8 +62,8 @@ module EventMachine
         Logger.print "state changed from #{@state} to #{state}", caller: caller, indent: 1
         @state = state
 
-        if state == :ready
-          @callbacks[:ready].each do |blk|
+        if @callbacks.keys.include? state
+          @callbacks[state].each do |blk|
             blk.call
           end
         end
@@ -92,7 +101,6 @@ module EventMachine
       def buffer_changed
 
         until bytes_waiting < 1 do
-          Logger.print "1 buffer is #{@buffer.pos}/#{@buffer.length}"
           case state
           when :connecting
             raise RTMPError, "Should not receive data while connecting"
@@ -101,23 +109,20 @@ module EventMachine
             if @handshake.buffer_changed == :handshake_complete
               Logger.print "handshake complete"
               @handshake = nil
-              change_state :ready
+              change_state :handshake_complete
             end
             break
-          when :ready
-            if header = Header.new(connection: self).populate_from_stream
-              Logger.print "routing new header for channel #{header.channel_id}, type: #{header.message_type}, length: #{header.body_length}"
-              @response_router.receive_header header
-            else
-              Logger.print "could not do it!"
-            end
+          when :handshake_complete, :ready
+            @response_router.buffer_changed
             next
           end
-          Logger.print "2 buffer is #{@buffer.pos}/#{@buffer.length}"
         end
 
-        Logger.print "no more bytes waiting"
-
+        if bytes_waiting < 1
+          Logger.print "no more bytes waiting"
+        else
+          Logger.print "loop got short circuited"
+        end
       end
     end
 

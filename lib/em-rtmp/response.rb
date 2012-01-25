@@ -3,7 +3,7 @@ module EventMachine
     class Response < ConnectionDelegate
       @@channels = []
 
-      attr_accessor :channel_id, :header, :body, :waiting_on_bytes
+      attr_accessor :channel_id, :header, :body, :message, :waiting_on_bytes
 
       # Initialize as a logical stream on a given stream ID
       #

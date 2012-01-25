@@ -48,20 +48,20 @@ module EventMachine
       def route_response(response)
         case response.header.message_type
         when :amf0
-          message = Message.new version: 0
-          message.decode response.body
+          response.message = Message.new version: 0
+          response.message.decode response.body
           Logger.info "head: #{response.header.inspect}"
-          Logger.info "amf0: #{message.inspect}"
+          Logger.info "amf0: #{response.message.inspect}"
 
-          if message.success? && message.transaction_id == 1.0
+          if response.message.success? && response.message.transaction_id == 1.0
             @connection.change_state :ready
           end
 
         when :amf3
-          message = Message.new version: 3
-          message.decode response.body
+          response.message = Message.new version: 3
+          response.message.decode response.body
           Logger.info "head: #{response.header.inspect}"
-          Logger.info "amf3: #{message.inspect}"
+          Logger.info "amf3: #{response.message.inspect}"
         when :chunk_size
           connection.chunk_size = response.body.unpack('N')[0]
           Logger.info "setting chunk_size to #{chunk_size}"

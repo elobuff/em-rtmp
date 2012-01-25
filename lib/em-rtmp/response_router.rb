@@ -12,7 +12,7 @@ module EventMachine
       def buffer_changed
         case state
         when :wait_header
-          header = Header.new(connection: @connection).populate_from_stream
+          header = Header.read_from_connection(@connection)
           Logger.print "routing new header channel=#{header.channel_id}, type=#{header.message_type_id} length=#{header.body_length}"
           receive_header header
         when :wait_chunk

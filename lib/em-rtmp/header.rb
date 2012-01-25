@@ -1,6 +1,6 @@
 module EventMachine
   module RTMP
-    class Header < ConnectionDelegate
+    class Header
 
       # The packet header is read as follows:
       #
@@ -63,7 +63,6 @@ module EventMachine
       #
       # Returns nothing
       def initialize(attrs={})
-        super attrs.delete(:connection)
         attrs.each {|k,v| send("#{k}=", v)}
       end
 
@@ -133,17 +132,21 @@ module EventMachine
         buffer.string
       end
 
-      # Read the header from the connection
+      # Read the header from a connection
+      #
+      # connection - connection to use
       #
       # Returns a new header instance
-      def populate_from_stream
+      def self.read_from_connection(stream)
+        header = new
+
         begin
-          h_type, self.channel_id = read_bitfield(2, 6)
+          h_type, header.channel_id = stream.read_bitfield(2, 6)
         rescue => e
           raise HeaderError, "Unable to read header type byte from buffer: #{e}"
         end
 
-        unless self.header_length = HEADER_LENGTHS[h_type]
+        unless header.header_length = HEADER_LENGTHS[h_type]
           raise HeaderError, "invalid header type #{h_type}"
         end
 
@@ -153,36 +156,36 @@ module EventMachine
         # 1 - value is third byte * 256 + second byte + 64
         # 2 - low level protocol message (ignore)
 
-        if channel_id == 0x00
-          self.channel_id = read_uint8 + 64
-        elsif channel_id == 0x01
-          self.channel_id = read_uint8 + 64 + (read_uint8 * 256)
+        if header.channel_id == 0x00
+          header.channel_id = stream.read_uint8 + 64
+        elsif header.channel_id == 0x01
+          header.channel_id = stream.read_uint8 + 64 + (stream.read_uint8 * 256)
         end
 
         # The timestamp is a 3-byte uint24. If this matches 0xffffff we will use another 4 bytes
         # after the header as the real timestamp.
-        if header_length >= 4
-          self.timestamp = read_uint24_be
+        if header.header_length >= 4
+          header.timestamp = stream.read_uint24_be
         end
 
         # The next 3 bytes are the length of the object body, followed by a single byte
         # representing the content type
-        if header_length >= 8
-          self.body_length = read_uint24_be
-          self.message_type_id = read_uint8
+        if header.header_length >= 8
+          header.body_length = stream.read_uint24_be
+          header.message_type_id = stream.read_uint8
         end
 
         # The next 4 bytes are the stream ID
-        if header_length >= 12
-          self.message_stream_id = read_uint32_le
+        if header.header_length >= 12
+          header.message_stream_id = stream.read_uint32_le
         end
 
         # If the timestamp was 0xffffff, the next 4 bytes are the real timestamp
-        if timestamp == 0xffffff
-          self.timestamp = read_uint32_be
+        if header.timestamp == 0xffffff
+          header.timestamp = stream.read_uint32_be
         end
 
-        self
+        header
       end
 
     end

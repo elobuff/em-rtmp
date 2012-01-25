@@ -33,6 +33,16 @@ module EventMachine
         self.message = Message.new version: 0
         self.message.command = "connect"
         self.message.transaction_id = 1
+
+        callback do |res|
+          Logger.debug "rtmp connect failed, becoming ready"
+          @connection.change_state :ready
+        end
+
+        errback do |res|
+          Logger.debug "rtmp connect failed, closing connection"
+          @connection.close_connection
+        end
       end
 
       # Returns a list of parameters given our class attributes, used

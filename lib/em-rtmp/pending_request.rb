@@ -1,11 +1,9 @@
 module EventMachine
   module RTMP
     class PendingRequest
-      include EventMachine::Deferrable
-
       @@pending_requests = {}
 
-      attr_accessor :request, :response
+      attr_accessor :request
 
       def initialize(request)
         self.request = request

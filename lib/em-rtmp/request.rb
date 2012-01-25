@@ -3,6 +3,7 @@ require "em-rtmp/connection_delegate"
 module EventMachine
   module RTMP
     class Request < ConnectionDelegate
+      include EventMachine::Deferrable
 
       # An RTMP packet includes a header and a body. Each packet is typically no
       # longer than 128 bytes, including the header. Multiple streams can be

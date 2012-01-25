@@ -45,6 +45,20 @@ module EventMachine
         end
       end
 
+      def route_amf(version, response)
+        Logger.debug "routing #{version} response for tid #{response.message.transaction_id}"
+        if pending_request = PendingRequest.find(version, response.message.transaction_id)
+          if response.message.success?
+            pending_request.request.succeed(response)
+          else
+            pending_request.request.fail(response)
+          end
+          pending_request.delete
+        else
+          Logger.error "unable to find a matching transaction"
+        end
+      end
+
       def route_response(response)
         case response.header.message_type
         when :amf0
@@ -52,16 +66,13 @@ module EventMachine
           response.message.decode response.body
           Logger.info "head: #{response.header.inspect}"
           Logger.info "amf0: #{response.message.inspect}"
-
-          if response.message.success? && response.message.transaction_id == 1.0
-            @connection.change_state :ready
-          end
-
+          route_amf :amf0, response
         when :amf3
           response.message = Message.new version: 3
           response.message.decode response.body
           Logger.info "head: #{response.header.inspect}"
           Logger.info "amf3: #{response.message.inspect}"
+          route_amf :amf3, response
         when :chunk_size
           connection.chunk_size = response.body.unpack('N')[0]
           Logger.info "setting chunk_size to #{chunk_size}"

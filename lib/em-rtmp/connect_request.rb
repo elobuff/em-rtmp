@@ -21,10 +21,12 @@ module EventMachine
       attr_accessor :app, :flashVer, :swfUrl, :tcUrl, :fpad, :capabilities,
                     :audioCodecs, :videoCodecs, :videoFunction, :pageUrl, :objectEncoding
 
+      # Initialize the request and set sane defaults for an RTMP connect
+      # request (transaction_id, command, header values)
+      #
+      # Returns nothing
       def initialize(connection)
         super connection
-
-        #DEFAULT_PARAMETERS.each {|k,v| send("self.#{k}=", v)}
 
         self.header.channel_id = 3
         self.header.message_type = :amf0
@@ -45,8 +47,10 @@ module EventMachine
         end
       end
 
-      # Returns a list of parameters given our class attributes, used
+      # Construct a list of parameters given our class attributes, used
       # to form the connect message object.
+      #
+      # Returns a Hash of symbols => values
       def parameters
         instance_values = Hash[instance_variables.map {|k| [k.to_s[1..-1].to_sym, instance_variable_get(k)]}]
         DEFAULT_PARAMETERS.merge instance_values.select {|k,v| DEFAULT_PARAMETERS.key? k }
@@ -54,6 +58,8 @@ module EventMachine
 
       # Given the specific nature of a connect request, we can just set the message
       # values to our params then encode that as our body before sending.
+      #
+      # Returns the result of super
       def send
         self.message.values = [parameters]
         self.body = message.encode

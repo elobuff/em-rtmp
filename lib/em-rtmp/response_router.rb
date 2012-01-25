@@ -4,11 +4,19 @@ module EventMachine
 
       attr_accessor :active_response
 
+      # Create a new response router object to delegate to. Start with a state
+      # of looking for a fresh header.
+      #
+      # Returns nothing
       def initialize(connection)
         super connection
         @state = :wait_header
       end
 
+      # Called by the connection when the buffer changes and it's appropriate to
+      # delegate to the response router. Take action depending on our state.
+      #
+      # Returns nothing
       def buffer_changed
         case state
         when :wait_header
@@ -20,13 +28,30 @@ module EventMachine
         end
       end
 
-      # Route a new header to a stream
+      # Receive a fresh header, add it to the appropriate response and receive
+      # a chunk of data for that response.
+      #
+      # header - Header to receive and act on
+      #
+      # Returns nothing
       def receive_header(header)
         response = Response.find_or_create(header.channel_id, @connection)
         response.add_header header
         receive_chunk response
       end
 
+      # Receive a chunk of data for a given response. Change our state depending
+      # on the result of the chunk read. If it was read in full, we'll look for
+      # a header next time around. Otherwise, we will continue to read into that
+      # chunk until it is satisfied.
+      #
+      # If the response is completely received, we'll clone it and route that to
+      # the appropriate action, then reset that response so that it can receive something
+      # else in the future.
+      #
+      # response - the Response object to act on
+      #
+      # Returns nothing
       def receive_chunk(response)
         response.read_next_chunk
 
@@ -45,20 +70,12 @@ module EventMachine
         end
       end
 
-      def route_amf(version, response)
-        Logger.debug "routing #{version} response for tid #{response.message.transaction_id}"
-        if pending_request = PendingRequest.find(version, response.message.transaction_id)
-          if response.message.success?
-            pending_request.request.succeed(response)
-          else
-            pending_request.request.fail(response)
-          end
-          pending_request.delete
-        else
-          Logger.error "unable to find a matching transaction"
-        end
-      end
-
+      # Route any response to its proper destination. AMF responses are routed to their
+      # pending request. Chunk size updates the connection, others are ignored for now.
+      #
+      # response - Response object to route or act on.
+      #
+      # Returns nothing.
       def route_response(response)
         case response.header.message_type
         when :amf0
@@ -85,6 +102,26 @@ module EventMachine
           Logger.info "setting bandwidth to #{bandwidth} (#{bandwidth_type})"
         else
           Logger.info "cannot route unknown response: #{response.inspect}"
+        end
+      end
+
+      # Route an AMF response to it's pending request
+      #
+      # version - AMF version (:amf0 or :amf3)
+      # response - Response object
+      #
+      # Returns nothing
+      def route_amf(version, response)
+        Logger.debug "routing #{version} response for tid #{response.message.transaction_id}"
+        if pending_request = PendingRequest.find(version, response.message.transaction_id)
+          if response.message.success?
+            pending_request.request.succeed(response)
+          else
+            pending_request.request.fail(response)
+          end
+          pending_request.delete
+        else
+          Logger.error "unable to find a matching transaction"
         end
       end
 

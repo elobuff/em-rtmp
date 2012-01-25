@@ -5,10 +5,16 @@ module EventMachine
 
       attr_accessor :request
 
+      # Create a new pending request from a request
+      #
+      # Returns nothing
       def initialize(request)
         self.request = request
       end
 
+      # Delete the current request from the list of pending requests
+      #
+      # Returns nothing
       def delete
         @@pending_requests[request.header.message_type].delete(request.message.transaction_id.to_i)
       end

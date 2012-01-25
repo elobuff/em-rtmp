@@ -17,6 +17,9 @@ module EventMachine
         self.waiting_on_bytes = 0
       end
 
+      # Reset the body (leave the header) between successful responses
+      #
+      # Returns nothing
       def reset
         self.body = ""
       end
@@ -69,6 +72,10 @@ module EventMachine
         self.body
       end
 
+      # Determines whether or not we're in the middle of a chunk waiting for more
+      # data, or it's ok to go ahead and peek for a header.
+      #
+      # Returns true or false
       def waiting_in_chunk?
         waiting_on_bytes > 0
       end

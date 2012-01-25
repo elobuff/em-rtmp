@@ -7,12 +7,22 @@ module EventMachine
     class MessageError < RTMPError; end
 
     # Create and establish a connection
-    def self.connect(server, port=nil)
+    #
+    # server - String, address of server
+    # port - Integer, port of server
+    #
+    # Returns an EventMachine::RTMP::Connection object
+    def self.connect(server, port)
       EventMachine.connect server, port, EventMachine::RTMP::Connection
     end
 
-    # Create and establish a secure connection
-    def self.ssl_connect(server, port=nil)
+    # Create and establish a secure (SSL) connection
+    #
+    # server - String, address of server
+    # port - Integer, port of server
+    #
+    # Returns an EventMachine::RTMP::SecureConnection object
+    def self.ssl_connect(server, port)
       EventMachine.connect server, port, EventMachine::RTMP::SecureConnection
     end
 

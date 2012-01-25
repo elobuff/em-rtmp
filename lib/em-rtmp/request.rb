@@ -4,8 +4,6 @@ module EventMachine
   module RTMP
     class Request < ConnectionDelegate
 
-      include EventMachine::Deferrable
-
       # An RTMP packet includes a header and a body. Each packet is typically no
       # longer than 128 bytes, including the header. Multiple streams can be
       # ongoing (and interweaving) at the same time, so we track them via their
@@ -80,6 +78,8 @@ module EventMachine
           self.header.header_length = header_length_for_chunk(i)
           bytes_sent += send_chunk chunks[i]
         end
+
+        PendingRequest.create self
 
         bytes_sent
       end

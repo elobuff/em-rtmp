@@ -40,7 +40,6 @@ describe Request do
   end
 
   describe 'sending' do
-
     it 'updates the header' do
       request.stub(:send_chunk).and_return(129)
       request.should_receive(:update_header)
@@ -50,6 +49,12 @@ describe Request do
     it 'sends the right number of chunks' do
       request.stub(:send_chunk).and_return(129)
       request.should_receive(:send_chunk).exactly(request.chunk_count).times
+      request.send
+    end
+
+    it 'adds self to the pending requests' do
+      request.stub(:send_chunk).and_return(129)
+      PendingRequest.should_receive(:create)
       request.send
     end
   end

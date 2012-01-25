@@ -30,28 +30,38 @@ module EventMachine
         self.header += header
       end
 
+      # Determines the proper chunk size from the connection
+      #
+      # Returns the chunk size as an Integer
+      def chunk_size
+        @connection.chunk_size
+      end
+
+      # Determines the proper amount of data to read this time around
+      #
+      # Returns the chunk size as an Integer
+      def read_size
+        if waiting_on_bytes > 0
+          waiting_on_bytes
+        else
+          [header.body_length - body.length, chunk_size].min
+        end
+      end
+
       # Read the next data chunk from the stream
       #
       # Returns the instance body
       def read_next_chunk
-        raise "No more data to read from stream" if header.body_length < body.length
-        raise "Negative read should not happen" if (header.body_length - body.length) < 0
-
-        if waiting_on_bytes > 0
-          read_size = waiting_on_bytes
-        else
-          chunk_size = @connection.chunk_size
-          read_size = [header.body_length - body.length, chunk_size].min
-        end
+        raise "No more data to read from stream" if header.body_length <= body.length
 
         Logger.print "want #{read_size} (#{body.length}/#{header.body_length})"
 
-        data = read(read_size)
+        desired_size = read_size
+        data = read(desired_size)
         self.body << data
 
-        if data.length != read_size
-          self.waiting_on_bytes = read_size - data.length
-          Logger.print "read_next_chunk got insufficient data (#{data.length}/#{read_size}), waiting"
+        if data.length != desired_size
+          self.waiting_on_bytes = desired_size - data.length
         else
           self.waiting_on_bytes = 0
         end

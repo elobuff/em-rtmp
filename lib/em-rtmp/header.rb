@@ -76,7 +76,6 @@ module EventMachine
         other_values = Hash[keys.map {|k| [k, header.instance_variable_get("@#{k}")]}]
         other_values.each do |k, v|
           unless v.nil?
-            Logger.debug "setting #{k} to #{v}"
             send("#{k}=", v) unless v.nil?
           end
         end

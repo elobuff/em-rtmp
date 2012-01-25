@@ -26,12 +26,57 @@ module EventMachine
         end
       end
 
+      # Used to track changes in state
+      #
+      # state - Symbol, new state to enter
+      #
+      # Returns nothing
+      def change_state(state)
+        return if @state == state
+        Logger.print "state changed from #{@state} to #{state}", caller: caller, indent: 1
+        @state = state
+        run_callbacks state
+      end
+
+      # Start the RTMP handshake process
+      #
+      # Returns nothing
+      def begin_rtmp_handshake
+        change_state :handshake
+        @handshake.issue_challenge
+      end
+
+      # Called to add a callback for when the RTMP handshake is
+      # completed. Most useful for issuing an RTMP connect request.
+      #
+      # blk - block to execute
+      #
+      # Returns nothing
       def on_handshake_complete(&blk)
         @callbacks[:handshake_complete] << blk
       end
 
+      # Called to add a callback for when the RTMP connection has
+      # been established and is ready for work.
+      #
+      # blk - block to execute
+      #
+      # Returns nothing
       def on_ready(&blk)
         @callbacks[:ready] << blk
+      end
+
+      # Called to run the callbacks for a specific event
+      #
+      # event - symbol representing the event to run callbacks for
+      #
+      # Returns nothing
+      def run_callbacks(event)
+        if @callbacks.keys.include? event
+          @callbacks[event].each do |blk|
+            blk.call
+          end
+        end
       end
 
       # Reads from the buffer, to facilitate IO operations
@@ -51,33 +96,26 @@ module EventMachine
         send_data data
       end
 
+      # Obtain the number of bytes waiting to be read in the buffer
+      #
+      # Returns an Integer
       def bytes_waiting
         @buffer.remaining
       end
 
-      # Used to track changes in state
+      # Perform the next step after the connection has been established
+      # Called by the Event Machine
       #
       # Returns nothing
-      def change_state(state)
-        Logger.print "state changed from #{@state} to #{state}", caller: caller, indent: 1
-        @state = state
-
-        if @callbacks.keys.include? state
-          @callbacks[state].each do |blk|
-            blk.call
-          end
-        end
-
-      end
-
-      # Start the handshake process when our connection is completed.
       def connection_completed
         Logger.print "connection completed, issuing rtmp handshake"
-        change_state :handshake
-        @handshake.issue_challenge
+        begin_rtmp_handshake
       end
 
-      # called when the connection is terminated
+      # Change our state to disconnected if we lose the connection.
+      # Called by the Event Machine
+      #
+      # Returns nothing
       def unbind
         Logger.print "disconnected"
         change_state :disconnected
@@ -85,6 +123,9 @@ module EventMachine
 
       # Receives data and offers it to the appropriate delegate object.
       # Fires a method call to buffer_changed to take action.
+      # Called by the Event machine
+      #
+      # data - data received
       #
       # Returns nothing
       def receive_data(data)
@@ -100,11 +141,11 @@ module EventMachine
       # Returns nothing
       def buffer_changed
 
-        until bytes_waiting < 1 do
+        loop do
+          break if bytes_waiting < 1
+
           case state
-          when :connecting
-            raise RTMPError, "Should not receive data while connecting"
-            break
+
           when :handshake
             if @handshake.buffer_changed == :handshake_complete
               Logger.print "handshake complete"
@@ -112,17 +153,14 @@ module EventMachine
               change_state :handshake_complete
             end
             break
+
           when :handshake_complete, :ready
             @response_router.buffer_changed
             next
+
           end
         end
 
-        if bytes_waiting < 1
-          Logger.print "no more bytes waiting"
-        else
-          Logger.print "loop got short circuited"
-        end
       end
     end
 
@@ -140,8 +178,7 @@ module EventMachine
       # Connection is now secure, issue the RTMP handshake challenge
       def ssl_handshake_completed
         Logger.print "ssl handshake completed, issuing rtmp handshake"
-        change_state :handshake
-        @handshake.issue_challenge
+        begin_rtmp_handshake
       end
     end
 

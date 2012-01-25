@@ -16,13 +16,8 @@ module EventMachine
         @chunk_size = 128
         @response_router = ResponseRouter.new(self)
         @handshake = Handshake.new(self)
-        @heartbeat = Heartbeat.new(self)
         @callbacks = { :handshake_complete => [], :ready => [] }
         @state = :connecting
-
-        on_ready do
-          @heartbeat.start
-        end
       end
 
       # Used to track changes in state

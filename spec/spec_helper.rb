@@ -2,6 +2,10 @@ require "rubygems"
 require "bundler/setup"
 require "em-rtmp"
 
+def rescue_block(&blk)
+  blk.call rescue nil
+end
+
 module EventMachine
   module RTMP
     class Logger

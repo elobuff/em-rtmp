@@ -30,7 +30,7 @@ module EventMachine
       #
       # Returns a string containing an encoded message
       def encode
-        Logger.print "encoding #{self.inspect}"
+        Logger.debug "encoding #{self.inspect}"
         class_mapper = RocketAMF::ClassMapper.new
         ser = RocketAMF::Serializer.new class_mapper
 

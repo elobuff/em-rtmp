@@ -9,11 +9,10 @@ end
 module EventMachine
   module RTMP
     class Logger
-      def self.log(l, m); end
-      def self.debug(m); end
-      def self.info(m); end
-      def self.error(m); end
-      def self.print(m, o={}); end
+      def self.debug(m, o=nil); end
+      def self.info(m, o=nil); end
+      def self.error(m, o=nil); end
+      def self.print(m, o=nil); end
     end
   end
 end

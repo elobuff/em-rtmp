@@ -16,14 +16,7 @@ module EventMachine
         end
 
         @block = Proc.new do
-          Logger.print "Heartbeat Pulsing"
-          #req = Request.new(@connection)
-          #req.header.channel_id = 3
-          #req.header.message_type_id = 17
-          #req.message.version = 3
-          #req.message.values = [{}]
-          #req.body = req.message.encode
-          #req.send
+          Logger.debug "Heartbeat Pulsing"
         end
 
         @block.call

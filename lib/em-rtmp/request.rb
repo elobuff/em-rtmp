@@ -74,6 +74,8 @@ module EventMachine
         bytes_sent = 0
         update_header
 
+        Logger.info "sending request channel=#{header.channel_id} type=#{header.message_type_id} length=#{header.body_length}"
+
         for i in 0..(chunk_count-1)
           self.header.header_length = header_length_for_chunk(i)
           bytes_sent += send_chunk chunks[i]
@@ -88,7 +90,7 @@ module EventMachine
       #
       # Returns the number of bytes written
       def send_chunk(chunk)
-        Logger.print "sending chunk (#{chunk.length})", indent: 1
+        Logger.debug "sending chunk (#{chunk.length})", indent: 1
         write(header.encode) + write(chunk)
       end
 

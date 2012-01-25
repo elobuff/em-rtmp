@@ -54,7 +54,7 @@ module EventMachine
       def read_next_chunk
         raise "No more data to read from stream" if header.body_length <= body.length
 
-        Logger.print "want #{read_size} (#{body.length}/#{header.body_length})"
+        Logger.debug "want #{read_size} (#{body.length}/#{header.body_length})"
 
         desired_size = read_size
         data = read(desired_size)
@@ -79,7 +79,7 @@ module EventMachine
       # Returns true or false
       def complete?
         complete = body.length >= header.body_length
-        Logger.print "response complete? #{complete} (#{body.length}/#{header.body_length})"
+        Logger.debug "response complete? #{complete} (#{body.length}/#{header.body_length})"
         complete
       end
 

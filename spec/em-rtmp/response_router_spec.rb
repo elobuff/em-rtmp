@@ -26,7 +26,6 @@ describe ResponseRouter do
     router.state.should eql :wait_header
   end
 
-
   describe "receiving a header" do
     it "should find an appropriate response and receive the chunk" do
       router.stub(:receive_chunk)

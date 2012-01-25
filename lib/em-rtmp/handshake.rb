@@ -27,7 +27,7 @@ module EventMachine
       #
       # Returns a symbol indicating our state
       def buffer_changed
-        Logger.print "#{state} #{bytes_waiting}", indent: 1
+        Logger.debug "#{state} #{bytes_waiting}"
         case state
         when :challenge_issued
           if bytes_waiting >= (1 + HANDSHAKE_LENGTH)
@@ -48,7 +48,7 @@ module EventMachine
       #
       # Returns a state update
       def issue_challenge
-        Logger.print "issuing client challenge", indent: 1
+        Logger.debug "issuing client challenge"
 
         @client_challenge = "\x00\x00\x00\x00\x00\x00\x00\x00" + (8...HANDSHAKE_LENGTH).map{rand(255)}.pack('C*')
 
@@ -62,7 +62,7 @@ module EventMachine
       #
       # Returns a state update
       def handle_server_challenge
-        Logger.print "handling server challenge", indent: 1
+        Logger.debug "handling server challenge"
 
         server_version = read_uint8
         unless server_version == HANDSHAKE_VERSION
@@ -78,14 +78,14 @@ module EventMachine
       #
       # Returns a state update
       def handle_server_response
-        Logger.print "handling client response", indent: 1
+        Logger.debug "handling client response"
 
         server_response = read(HANDSHAKE_LENGTH)
         unless server_response == @client_challenge
           raise HandshakeError, "Expected server to return client challenge"
         end
 
-        Logger.print "handshake complete", indent: 1
+        Logger.debug "handshake complete"
         change_state :handshake_complete
       end
 

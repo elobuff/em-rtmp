@@ -18,8 +18,7 @@ module EventMachine
         @handshake = Handshake.new(self)
         @heartbeat = Heartbeat.new(self)
         @callbacks = { :handshake_complete => [], :ready => [] }
-
-        change_state :connecting
+        @state = :connecting
 
         on_ready do
           @heartbeat.start
@@ -33,7 +32,7 @@ module EventMachine
       # Returns nothing
       def change_state(state)
         return if @state == state
-        Logger.print "state changed from #{@state} to #{state}", caller: caller, indent: 1
+        Logger.info "state changed from #{@state} to #{state}", caller: caller
         @state = state
         run_callbacks state
       end
@@ -83,7 +82,7 @@ module EventMachine
       #
       # Returns the result of the read
       def read(length)
-        Logger.print "reading #{length} bytes from buffer"
+        Logger.debug "reading #{length} bytes from buffer"
         @buffer.read length
       end
 
@@ -91,8 +90,7 @@ module EventMachine
       #
       # Returns nothing
       def write(data)
-        Logger.print "sending #{data.length} bytes"
-        Logger.debug "Sending [#{data.length}]: #{data}"
+        Logger.debug "sending #{data.length} bytes to stream"
         send_data data
       end
 
@@ -108,7 +106,7 @@ module EventMachine
       #
       # Returns nothing
       def connection_completed
-        Logger.print "connection completed, issuing rtmp handshake"
+        Logger.info "connection completed, issuing rtmp handshake"
         begin_rtmp_handshake
       end
 
@@ -117,7 +115,7 @@ module EventMachine
       #
       # Returns nothing
       def unbind
-        Logger.print "disconnected"
+        Logger.info "disconnected from peer"
         change_state :disconnected
       end
 
@@ -129,8 +127,7 @@ module EventMachine
       #
       # Returns nothing
       def receive_data(data)
-        Logger.print "received #{data.length} bytes"
-        Logger.debug "Received [#{data.length}]: #{data}"
+        Logger.debug "received #{data.length} bytes"
         @buffer.append data
         buffer_changed
       end
@@ -148,7 +145,6 @@ module EventMachine
 
           when :handshake
             if @handshake.buffer_changed == :handshake_complete
-              Logger.print "handshake complete"
               @handshake = nil
               change_state :handshake_complete
             end
@@ -171,13 +167,13 @@ module EventMachine
       # When the connection is established, make it secure before
       # starting the RTMP handshake process.
       def connection_completed
-        Logger.print "connection completed, starting tls"
+        Logger.info "connection completed, starting tls"
         start_tls verify_peer: false
       end
 
       # Connection is now secure, issue the RTMP handshake challenge
       def ssl_handshake_completed
-        Logger.print "ssl handshake completed, issuing rtmp handshake"
+        Logger.info "ssl handshake completed, issuing rtmp handshake"
         begin_rtmp_handshake
       end
     end

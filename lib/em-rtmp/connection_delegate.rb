@@ -14,6 +14,7 @@ module EventMachine
       # Returns nothing.
       def initialize(connection)
         @connection = connection
+        @state = :none
       end
 
       # Connection Delegates send read operations directly to the connection
@@ -50,7 +51,7 @@ module EventMachine
       # Returns nothing
       def change_state(state)
         return if @state == state
-        Logger.print "state changed from #{@state} to #{state}", caller: caller, indent: 1
+        Logger.info "state changed from #{@state} to #{state}", caller: caller
         @state = state
       end
 

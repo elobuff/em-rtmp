@@ -35,7 +35,7 @@ module EventMachine
         transaction_id = request.message.transaction_id.to_i
         @@pending_requests[message_type] ||= {}
         @@pending_requests[message_type][transaction_id] = new(request)
-        Logger.info "stored pending request as [#{message_type}][#{transaction_id}]"
+        Logger.debug "stored pending request as [#{message_type}][#{transaction_id}]"
         @@pending_requests[message_type][transaction_id]
       end
 

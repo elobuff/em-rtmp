@@ -12,12 +12,6 @@ module EventMachine
         attr_accessor :level
       end
 
-      def self.log(level, message)
-        @@file ||= File.open('/Users/jcoene/Desktop/em-rtmp.log', 'a')
-        @@file.write("[#{Time.now.strftime('%T')}] [#{level}] #{message}\n")
-        @@file.flush
-      end
-
       def self.level(level)
         @@level = level
       end

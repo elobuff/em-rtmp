@@ -38,8 +38,8 @@ module EventMachine
       # Returns a list of parameters given our class attributes, used
       # to form the connect message object.
       def parameters
-        instance_values = Hash[instance_variables.map {|k| [k.to_s[1..-1], instance_variable_get(k)]}]
-        instance_values.select {|k,v| DEFAULT_PARAMETERS.key? k }.merge DEFAULT_PARAMETERS
+        instance_values = Hash[instance_variables.map {|k| [k.to_s[1..-1].to_sym, instance_variable_get(k)]}]
+        DEFAULT_PARAMETERS.merge instance_values.select {|k,v| DEFAULT_PARAMETERS.key? k }
       end
 
       # Given the specific nature of a connect request, we can just set the message

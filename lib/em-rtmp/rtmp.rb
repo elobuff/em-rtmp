@@ -12,7 +12,7 @@ module EventMachine
     # port - Integer, port of server
     #
     # Returns an EventMachine::RTMP::Connection object
-    def self.connect(server, port)
+    def self.connect(server, port=1935)
       EventMachine.connect server, port, EventMachine::RTMP::Connection
     end
 
@@ -22,7 +22,7 @@ module EventMachine
     # port - Integer, port of server
     #
     # Returns an EventMachine::RTMP::SecureConnection object
-    def self.ssl_connect(server, port)
+    def self.ssl_connect(server, port=443)
       EventMachine.connect server, port, EventMachine::RTMP::SecureConnection
     end
 

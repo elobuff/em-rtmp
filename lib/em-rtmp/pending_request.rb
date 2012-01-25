@@ -12,7 +12,7 @@ module EventMachine
       end
 
       def delete
-        @@pending_requests[request.header.message_type].delete(request.message.transaction_id)
+        @@pending_requests[request.header.message_type].delete(request.message.transaction_id.to_i)
       end
 
       # Find a request by message type and transaction id

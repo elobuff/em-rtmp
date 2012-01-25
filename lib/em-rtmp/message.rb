@@ -83,7 +83,7 @@ module EventMachine
       end
 
       def success?
-        command != "_error"
+        (command != "_error") && _amf_error.nil?
       end
 
       def self.next_transaction_id

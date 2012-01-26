@@ -16,7 +16,7 @@ module EventMachine
         @chunk_size = 128
         @response_router = ResponseRouter.new(self)
         @handshake = Handshake.new(self)
-        @callbacks = { :handshake_complete => [], :ready => [] }
+        @callbacks = { :handshake_complete => [], :ready => [], :disconnected => [] }
         @state = :connecting
       end
 
@@ -58,6 +58,16 @@ module EventMachine
       # Returns nothing
       def on_ready(&blk)
         @callbacks[:ready] << blk
+      end
+
+      # Called to add a callback for when the TCP connection has
+      # been disconnected.
+      #
+      # blk - block to execute
+      #
+      # Returns nothing
+      def on_disconnected(&blk)
+        @callbacks[:disconnected] << blk
       end
 
       # Called to run the callbacks for a specific event

@@ -80,7 +80,7 @@ module EventMachine
           bytes_sent += send_chunk chunks[i]
         end
 
-        PendingRequest.create self
+        PendingRequest.create self, @connection
 
         bytes_sent
       end

@@ -5,7 +5,7 @@ module EventMachine
     class Connection < EventMachine::Connection
       include IOHelpers
 
-      attr_accessor :state, :chunk_size
+      attr_accessor :state, :chunk_size, :channels, :pending_requests
 
       # Initialize the connection and setup our handshake
       #
@@ -17,6 +17,8 @@ module EventMachine
         @response_router = ResponseRouter.new(self)
         @handshake = Handshake.new(self)
         @callbacks = { :handshake_complete => [], :ready => [], :disconnected => [] }
+        @channels = []
+        @pending_requests = {}
         @state = :connecting
       end
 

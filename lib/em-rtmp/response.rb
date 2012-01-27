@@ -1,8 +1,6 @@
 module EventMachine
   module RTMP
     class Response < ConnectionDelegate
-      @@channels = []
-
       attr_accessor :channel_id, :header, :body, :message, :waiting_on_bytes
 
       # Initialize as a logical stream on a given stream ID
@@ -97,8 +95,8 @@ module EventMachine
       #
       # Returns a Response instance
       def self.find_or_create(channel_id, connection)
-        @@channels[channel_id] ||= Response.new(channel_id, connection)
-        @@channels[channel_id]
+        connection.channels[channel_id] ||= Response.new(channel_id, connection)
+        connection.channels[channel_id]
       end
 
     end

@@ -1,22 +1,21 @@
 module EventMachine
   module RTMP
     class PendingRequest
-      @@pending_requests = {}
-
-      attr_accessor :request
+      attr_accessor :request, :connection
 
       # Create a new pending request from a request
       #
       # Returns nothing
-      def initialize(request)
+      def initialize(request, connection)
         self.request = request
+        self.connection = connection
       end
 
       # Delete the current request from the list of pending requests
       #
       # Returns nothing
       def delete
-        @@pending_requests[request.header.message_type].delete(request.message.transaction_id.to_i)
+        connection.pending_requests[request.header.message_type].delete(request.message.transaction_id.to_i)
       end
 
       # Find a request by message type and transaction id
@@ -25,9 +24,9 @@ module EventMachine
       # transaction_id - Integer representing the transaction id
       #
       # Returns the request or nothing
-      def self.find(message_type, transaction_id)
-        if @@pending_requests[message_type]
-          @@pending_requests[message_type][transaction_id.to_i]
+      def self.find(message_type, transaction_id, connection)
+        if connection.pending_requests[message_type]
+          connection.pending_requests[message_type][transaction_id.to_i]
         end
       end
 
@@ -36,13 +35,12 @@ module EventMachine
       # request - Request to add
       #
       # Returns the request
-      def self.create(request)
+      def self.create(request, connection)
         message_type = request.header.message_type
         transaction_id = request.message.transaction_id.to_i
-        @@pending_requests[message_type] ||= {}
-        @@pending_requests[message_type][transaction_id] = new(request)
-        Logger.debug "stored pending request as [#{message_type}][#{transaction_id}]"
-        @@pending_requests[message_type][transaction_id]
+        connection.pending_requests[message_type] ||= {}
+        connection.pending_requests[message_type][transaction_id] = new(request, connection)
+        connection.pending_requests[message_type][transaction_id]
       end
 
     end

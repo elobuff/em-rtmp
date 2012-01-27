@@ -113,7 +113,7 @@ module EventMachine
       # Returns nothing
       def route_amf(version, response)
         Logger.debug "routing #{version} response for tid #{response.message.transaction_id}"
-        if pending_request = PendingRequest.find(version, response.message.transaction_id)
+        if pending_request = PendingRequest.find(version, response.message.transaction_id, @connection)
           if response.message.success?
             pending_request.request.succeed(response)
           else

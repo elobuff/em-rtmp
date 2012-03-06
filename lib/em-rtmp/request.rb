@@ -73,7 +73,8 @@ module EventMachine
         bytes_sent = 0
         update_header
 
-        Logger.info "sending request channel=#{header.channel_id} type=#{header.message_type_id} length=#{header.body_length}"
+        Logger.info "head: #{header.inspect}"
+        Logger.info "body: #{message.inspect}"
 
         for i in 0..(chunk_count-1)
           self.header.header_length = header_length_for_chunk(i)

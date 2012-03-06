@@ -32,9 +32,9 @@ module EventMachine
         self.header.message_type = :amf0
         self.header
 
-        self.message = Message.new version: 0
-        self.message.command = "connect"
+        self.message.version = 0
         self.message.transaction_id = 1
+        self.message.command = "connect"
 
         callback do |res|
           Logger.debug "rtmp connect failed, becoming ready"
@@ -56,12 +56,25 @@ module EventMachine
         DEFAULT_PARAMETERS.merge instance_values.select {|k,v| DEFAULT_PARAMETERS.key? k }
       end
 
+      def command_message
+        cm = RocketAMF::Values::CommandMessage.new
+        cm.operation = 5
+        cm.correlationId = ""
+        cm.timestamp = 0
+        cm.timeToLive = 0
+        cm.messageId = UUID.random
+        cm.body = {}
+        cm.destination = ""
+        cm.headers = { "DSMessagingVersion" => 1, "DSId" => "my-rtmps" }
+        cm
+      end
+
       # Given the specific nature of a connect request, we can just set the message
       # values to our params then encode that as our body before sending.
       #
       # Returns the result of super
       def send
-        self.message.values = [parameters]
+        self.message.values = [parameters, false, "nil", "", command_message]
         self.body = message.encode
         super
       end

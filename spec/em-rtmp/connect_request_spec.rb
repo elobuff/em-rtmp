@@ -15,12 +15,6 @@ describe ConnectRequest do
     request.parameters[:app].should eql "some_app"
   end
 
-  it 'should use the parameters as the value of the message' do
-    request.stub(:send_chunk).and_return(0)
-    request.send
-    request.message.values.should eql [request.parameters]
-  end
-
   it 'should use the encoded message as the body' do
     request.stub(:send_chunk).and_return(0)
     request.send

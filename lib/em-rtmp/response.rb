@@ -59,10 +59,14 @@ module EventMachine
 
         desired_size = read_size
         data = read(desired_size)
-        self.body << data
+        data_length = data ? data.length : 0
 
-        if data.length != desired_size
-          self.waiting_on_bytes = desired_size - data.length
+        if data_length > 0
+          self.body << data
+        end
+
+        if data_length != desired_size
+          self.waiting_on_bytes = desired_size - data_length
         else
           self.waiting_on_bytes = 0
         end

@@ -60,6 +60,11 @@ describe Response do
       response.read_next_chunk
     end
 
+    it "handles a null read" do
+      response.stub(:read).and_return(nil)
+      lambda { response.read_next_chunk }.should_not raise_error
+    end
+
     it "stores the read data in the body" do
       response.stub(:read).and_return("ALOHA")
       response.body.should eql ""

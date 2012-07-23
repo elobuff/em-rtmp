@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_dependency "eventmachine"
-  s.add_dependency "RocketAMF", "~> 1.0.0"
+  s.add_dependency "rocketamf_pure", "~> 1.0.0"
 
   s.add_development_dependency "rspec", "~> 2.8.0"
   s.add_development_dependency "guard-rspec"

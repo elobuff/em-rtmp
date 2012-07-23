@@ -1,15 +1,9 @@
-GIT
-  remote: git://github.com/rubyamf/rocketamf.git
-  revision: ed82db7659f624d6c3ca244e4127dad270a484c7
-  specs:
-    RocketAMF (1.0.0)
-
 PATH
   remote: .
   specs:
-    em-rtmp (0.0.1)
-      RocketAMF (~> 1.0.0)
+    em-rtmp (0.0.3)
       eventmachine
+      rocketamf_pure (~> 1.0.0)
 
 GEM
   remote: http://rubygems.org/
@@ -23,6 +17,7 @@ GEM
       thor (~> 0.14.6)
     guard-rspec (0.6.0)
       guard (>= 0.10.0)
+    rocketamf_pure (1.0.0)
     rspec (2.8.0)
       rspec-core (~> 2.8.0)
       rspec-expectations (~> 2.8.0)
@@ -37,7 +32,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  RocketAMF!
   em-rtmp!
   growl
   guard-rspec

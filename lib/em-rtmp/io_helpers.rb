@@ -6,7 +6,7 @@ module EventMachine
       #
       # Returns the result of the read
       def read_uint8
-        read(1).unpack('C')[0]
+        read_safe(1).unpack('C')[0]
       end
 
       # Write an unsigned 8-bit integer
@@ -22,7 +22,7 @@ module EventMachine
       #
       # Returns the result of the read
       def read_uint16_be
-        read(2).unpack('n')[0]
+        read_safe(2).unpack('n')[0]
       end
 
       # Write an unsigned 16-bit integer
@@ -38,7 +38,7 @@ module EventMachine
       #
       # Returns the result of the read
       def read_uint24_be
-        ("\x00" + read(3)).unpack('N')[0]
+        ("\x00" + read_safe(3)).unpack('N')[0]
       end
 
       # Write an unsigned 24-bit integer
@@ -54,14 +54,14 @@ module EventMachine
       #
       # Returns the result of the read
       def read_uint32_be
-        read(4).unpack('N')[0]
+        read_safe(4).unpack('N')[0]
       end
 
       # Read a unsigned 32-bit integer (little endian)
       #
       # Returns the result of the read
       def read_uint32_le
-        read(4).unpack('V')[0]
+        read_safe(4).unpack('V')[0]
       end
 
       # Write an unsigned 32-bit integer (big endian)
@@ -86,7 +86,7 @@ module EventMachine
       #
       # Returns the result of the read
       def read_double_be
-        read(8).unpack('G')[0]
+        read_safe(8).unpack('G')[0]
       end
 
       # Write a double (big endian)
@@ -170,6 +170,18 @@ module EventMachine
         write_uint8 values_and_widths.zip(sm).inject(0){ |byte, ((value, width), (shift, mask))|
           byte | ((value & mask) << shift)
         }
+      end
+
+      def read_safe(length)
+        raise ArgumentError, "cannot read nothing: #{length}" unless length && length >= 1
+
+        loop do
+          if value = read(length)
+            return value
+          else
+            Logger.error "unable to read from socket"
+          end
+        end
       end
 
       private

@@ -148,19 +148,21 @@ module EventMachine
         loop do
           break if bytes_waiting < 1
 
-          case state
-
-          when :handshake
-            if @handshake.buffer_changed == :handshake_complete
-              @handshake = nil
-              change_state :handshake_complete
+          begin
+            case state
+            when :handshake
+              if @handshake.buffer_changed == :handshake_complete
+                @handshake = nil
+                change_state :handshake_complete
+              end
+              break
+            when :handshake_complete, :ready
+              @response_router.buffer_changed
+              next
             end
-            break
-
-          when :handshake_complete, :ready
-            @response_router.buffer_changed
-            next
-
+          rescue NoMethodError, TypeError, RuntimeError => e
+            Logger.error "failure: #{e}"
+            retry
           end
         end
 

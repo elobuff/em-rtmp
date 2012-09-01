@@ -175,12 +175,12 @@ module EventMachine
       def read_safe(length)
         raise ArgumentError, "cannot read nothing: #{length}" unless length && length >= 1
 
-        loop do
-          if value = read(length)
-            return value
-          else
-            Logger.error "unable to read from socket"
-          end
+        if value = read(length)
+          return value
+        else
+          Logger.error "unable to read from socket, closing connection"
+          close_connection
+          ""
         end
       end
 

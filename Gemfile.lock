@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    em-rtmp (0.0.3)
+    em-rtmp (0.0.6)
       eventmachine
       rocketamf_pure (~> 1.0.0)
 

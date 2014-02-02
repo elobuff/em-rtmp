@@ -24,3 +24,7 @@ EventMachine.run do
 
 end
 ```
+
+## License
+
+MIT License, see LICENSE for details.

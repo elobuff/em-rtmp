@@ -16,7 +16,8 @@ Gem::Specification.new do |s|
   s.add_dependency "eventmachine"
   s.add_dependency "rocketamf_pure", "~> 1.0.0"
 
-  s.add_development_dependency "rspec", "~> 2.8.0"
+  s.add_development_dependency "rake"
+  s.add_development_dependency "rspec"
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "growl"
 end

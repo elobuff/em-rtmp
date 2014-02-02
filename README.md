@@ -1,5 +1,7 @@
 # EM-RTMP
 
+[![Build Status](https://secure.travis-ci.org/elobuff/em-rtmp.png?branch=master)](http://travis-ci.org/elobuff/em-rtmp)
+
 Asynchronous RTMP client powered by EventMachine.
 
 ## Usage

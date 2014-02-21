@@ -91,8 +91,8 @@ module EventMachine
           Logger.info "amf3: #{response.message.inspect}"
           route_amf :amf3, response
         when :chunk_size
-          connection.chunk_size = response.body.unpack('N')[0]
-          Logger.info "setting chunk_size to #{chunk_size}"
+          @connection.chunk_size = response.body.unpack('N')[0]
+          Logger.info "setting chunk_size to #{@connection.chunk_size}"
         when :ack_size
           ack_size = response.body.unpack('N')[0]
           Logger.info "setting ack_size to #{ack_size}"
